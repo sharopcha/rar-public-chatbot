@@ -17,7 +17,7 @@ from openai import OpenAI
 from langchain.chains import LLMChain
 from langchain.memory import VectorStoreRetrieverMemory
 
-# import os
+import os
 # os.environ['OPENAI_API_KEY']=""
 # os.environ["LANGCHAIN_API_KEY"] = ""
 # os.environ["LANGCHAIN_TRACING_V2"] = ""
