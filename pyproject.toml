@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "RAR Chatbot"
+name = "RARChatbot"
 version = "0.1.0"
 description = ""
 authors = ["Azizmatov Sharofiddin"]
