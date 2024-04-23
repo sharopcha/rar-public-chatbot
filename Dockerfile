@@ -1,20 +1,20 @@
 FROM python:3.11-slim
 
 RUN pip install poetry==1.6.1
-RUN poerty lock --new
+
 RUN poetry config virtualenvs.create false
 
 WORKDIR /code
 
-COPY ./pyproject.toml ./README.md ./
-# ./poetry.lock*
+COPY ./pyproject.toml ./README.md ./poetry.lock* ./
+#
 
 RUN poetry install  --no-interaction --no-ansi --no-root
 RUN poerty lock --new
 
 COPY ./app ./app
 COPY ./rar-information.txt ./rar-information.txt
-RUN poerty lock --new
+
 RUN poetry install --no-interaction --no-ansi
 
 EXPOSE 8080
