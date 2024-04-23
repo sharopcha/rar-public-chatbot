@@ -6,8 +6,8 @@ RUN poetry config virtualenvs.create false
 
 WORKDIR /code
 
-COPY ./pyproject.toml ./README.md ./poetry.lock* ./
-
+COPY ./pyproject.toml ./README.md ./
+# ./poetry.lock*
 
 RUN poetry install  --no-interaction --no-ansi --no-root
 RUN poerty lock --new
