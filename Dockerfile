@@ -11,6 +11,7 @@ COPY ./pyproject.toml ./README.md ./poetry.lock* ./
 RUN poetry install  --no-interaction --no-ansi --no-root
 
 COPY ./app ./app
+COPY ./rar-information.txt ./rar-information.txt
 
 RUN poetry install --no-interaction --no-ansi
 
