@@ -10,7 +10,7 @@ COPY ./pyproject.toml ./README.md ./poetry.lock* ./
 
 
 RUN poetry install  --no-interaction --no-ansi --no-root
-RUN poerty lock --no-update
+RUN poerty lock --new
 
 COPY ./app ./app
 COPY ./rar-information.txt ./rar-information.txt
