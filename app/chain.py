@@ -1,60 +1,82 @@
-import os
+import asyncio  # This is a sample Python script.
 
-from dotenv import load_dotenv
-from langchain_community.chat_models import ChatOpenAI
-from langchain_community.embeddings import CohereEmbeddings
-from langchain_community.vectorstores import Pinecone
-from langchain_core.output_parsers import StrOutputParser
+from langchain.vectorstores import Chroma
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.llms import OpenAI
+from langchain.chains import VectorDBQA
+from langchain.document_loaders import TextLoader
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_community.vectorstores import Chroma
+
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnableParallel, RunnablePassthrough, RunnableLambda
-from pinecone import Pinecone as PineconeClient
-import requests
-load_dotenv()
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.pydantic_v1 import BaseModel
+from openai import OpenAI
+from langchain.chains import LLMChain
+from langchain.memory import VectorStoreRetrieverMemory
 
-# Keys
-PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
-PINECONE_ENVIRONMENT = os.environ["PINECONE_ENVIRONMENT"]
-PINECONE_INDEX_NAME = os.environ["PINECONE_INDEX_NAME"]
+# import os
+# os.environ['OPENAI_API_KEY']=""
+# os.environ["LANGCHAIN_API_KEY"] = ""
+# os.environ["LANGCHAIN_TRACING_V2"] = ""
+# os.environ["LANGCHAIN_PROJECT"] = ""
 
-pinecone = PineconeClient(api_key=PINECONE_API_KEY,
-                         environment=PINECONE_ENVIRONMENT)
+client = OpenAI(
+    api_key=os.environ.get("OPENAI_API_KEY"), #you can put the key here directy
+)
 
-embeddings = CohereEmbeddings(model="multilingual-22-12")
-vectorstore = Pinecone.from_existing_index(index_name=PINECONE_INDEX_NAME,
-                                           embedding=embeddings)
+def load_and_split_data():
+    loader = TextLoader('rar-information.txt', encoding='utf-8')
+    data = loader.load()
 
-retriever = vectorstore.as_retriever()
-
-def fetch_wikipedia_page(id):
-    url = f"https://en.wikipedia.org/w/api.php?action=query&prop=extracts&format=json&pageids={id}"
-    response = requests.get(url)
-    data = response.json()
-    page_content = list(data['query']['pages'].values())[0]['extract']
-    return page_content
-
-def fetch_url(x):
-    urls = [doc.metadata['url'] for doc in x['context']]
-    ids = [url.split('=')[-1] for url in urls]
-    contents = [fetch_wikipedia_page(id)[:32000] for id in ids]    
-    return {"context": contents, "question": x["question"]}
+    # Split
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=0)
+    all_splits = text_splitter.split_documents(data)
+    return all_splits
 
 
-# RAG prompt
-template = """Answer the question based only on the following context:
+def get_retriver():
+    collection = Chroma(persist_directory="./chroma_db", embedding_function=OpenAIEmbeddings())
+    splits = load_and_split_data()
+    if(collection._collection.count() == 0):
+        # Add to vectorDB
+        vectorstore = Chroma.from_documents(documents=splits,
+                                            persist_directory="./chroma_db",
+                                            embedding=OpenAIEmbeddings(),
+                                            )
+        return vectorstore.as_retriever()
+    return collection.as_retriever()
+
+template = """You are helpful chat assistant at Romanian Auto Register. Answer user question based on the given context.
+User may ask question in romanian or english language answer based on the question language.
+If you dont know the answer, kindly say that you dont know answer and let them to contact RAR.
 {context}
+
 Question: {question}
-"""
+Answer:"""
 prompt = ChatPromptTemplate.from_template(template)
 
-# RAG
-model = ChatOpenAI(temperature=0, model="gpt-4-1106-preview")
-
+# LLM
+model = ChatOpenAI(verbose=True, model="gpt-4")
+retriever = get_retriver()
+# RAG chain
 chain = (
-    RunnableParallel({"context": retriever, "question": RunnablePassthrough()})
-    | RunnableLambda(fetch_url)  # Add this line
+    {'context': retriever, "question": RunnablePassthrough()}
     | prompt
-    | model
+    | model.bind(stop=["\nAnswer:"])
     | StrOutputParser()
 )
 
 
+# async def run():
+#     chunks = []
+#     async for chunk in chain.astream("Ce tip de documente am nevoie pentru eliberare civ?"):
+#         chunks.append(chunk)
+#         print(chunk, end="", flush=True)
+#
+# # Press the green button in the gutter to run the script.
+# if __name__ == '__main__':
+#     # print(chain.invove())
+#     asyncio.run(run())

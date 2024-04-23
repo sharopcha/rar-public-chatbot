@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from langserve import add_routes
-from app.chain import chain as pinecone_wiki_chain
+from app.chain import chain as rar_chatbot
 
 app = FastAPI()
 
@@ -12,7 +12,7 @@ async def redirect_root_to_docs():
 
 
 # Edit this to add the chain you want to add
-add_routes(app, pinecone_wiki_chain, path="/pinecone-wikipedia")
+add_routes(app, rar_chatbot, path="/rar-chatbot")
 
 if __name__ == "__main__":
     import uvicorn
