@@ -23,6 +23,7 @@ from langchain.memory import VectorStoreRetrieverMemory
 # os.environ["LANGCHAIN_TRACING_V2"] = ""
 # os.environ["LANGCHAIN_PROJECT"] = ""
 
+# OpenAI API
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"), #you can put the key here directy
 )
