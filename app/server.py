@@ -2,9 +2,9 @@ from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from langserve import add_routes
 from app.chain import chain as rar_chatbot
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+# __import__('pysqlite3')
+# import sys
+# sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 app = FastAPI()
 
